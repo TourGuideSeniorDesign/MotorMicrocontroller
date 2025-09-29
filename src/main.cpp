@@ -34,16 +34,7 @@ int speedFreqLPin = 14;
 
 
 //4095 is max
-float motorMaxSpeed = 2000;
-
-// Speed ramping configuration
-const float RAMP_RATE = 50.0; // speed units per second (adjust for desired ramp speed)
-const float EMERGENCY_RAMP_RATE = 200.0; // faster deceleration for emergency stops
-
-// Current ramped speeds
-float currentSpeedR = 0.0;
-float currentSpeedL = 0.0;
-unsigned long lastRampTime = 0;
+float motorMaxSpeed = 1000;
 
 
 //variables to be used in the code
@@ -151,38 +142,6 @@ void setup() {
    speedL = (freqL*10/21.33)*3.14*12.5*60/63360;
  }
 
-// Smooth speed ramping function
-void rampSpeeds(float targetSpeedR, float targetSpeedL, bool emergencyStop = false) {
-    unsigned long currentTime = millis();
-    float deltaTime = (currentTime - lastRampTime) / 1000.0; // convert to seconds
-    
-    if (lastRampTime == 0) {
-        lastRampTime = currentTime;
-        return; // Skip first iteration to establish timing baseline
-    }
-    
-    float rampRate = emergencyStop ? EMERGENCY_RAMP_RATE : RAMP_RATE;
-    float maxChange = rampRate * deltaTime;
-    
-    // Ramp right motor speed
-    float speedDiffR = targetSpeedR - currentSpeedR;
-    if (abs(speedDiffR) <= maxChange) {
-        currentSpeedR = targetSpeedR; // Close enough, set to target
-    } else {
-        currentSpeedR += (speedDiffR > 0) ? maxChange : -maxChange;
-    }
-    
-    // Ramp left motor speed
-    float speedDiffL = targetSpeedL - currentSpeedL;
-    if (abs(speedDiffL) <= maxChange) {
-        currentSpeedL = targetSpeedL; // Close enough, set to target
-    } else {
-        currentSpeedL += (speedDiffL > 0) ? maxChange : -maxChange;
-    }
-    
-    lastRampTime = currentTime;
-}
-
 void loop() {
 
 #if defined(ROS) || defined(ROS_DEBUG)
@@ -252,27 +211,17 @@ void loop() {
     }
 
 
-    // Calculate target speeds
-    float targetSpeedR = abs(refSpeedSensors.rightSpeed) * motorMaxSpeed / 100;
-    float targetSpeedL = abs(refSpeedSensors.leftSpeed) * motorMaxSpeed / 100;
+    float tempRefSpeedR = abs(refSpeedSensors.rightSpeed) * motorMaxSpeed / 100;
+    float tempRefSpeedL = abs(refSpeedSensors.leftSpeed) * motorMaxSpeed / 100;
 
-    // Apply smooth speed ramping
-    bool isEmergencyStop = (refSpeedSensors.rightSpeed == 0 && refSpeedSensors.leftSpeed == 0);
-    rampSpeeds(targetSpeedR, targetSpeedL, isEmergencyStop);
 
-    // Use ramped speeds for motor control
-    refSpeedR = static_cast<int16_t>(currentSpeedR);
-    refSpeedL = static_cast<int16_t>(currentSpeedL);
+    refSpeedR=static_cast<int16_t>(tempRefSpeedR);
+    refSpeedL=static_cast<int16_t>(tempRefSpeedL);
 
 #if defined(ROS) || defined(ROS_DEBUG)
     // Adding the ebrake. The brake variable is flipped, so false = brake on
     if(eBrake){
         brake = false;
-        // Force immediate stop on emergency brake
-        currentSpeedR = 0.0;
-        currentSpeedL = 0.0;
-        refSpeedR = 0;
-        refSpeedL = 0;
     }
     transmitDac(refSpeedL, refSpeedR);
 #endif
