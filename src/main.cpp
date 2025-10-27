@@ -217,14 +217,14 @@ void loop()
     refSpeedR = static_cast<int16_t>(tempRefSpeedR);
     refSpeedL = static_cast<int16_t>(tempRefSpeedL);
 
-#if defined(ROS) || defined(ROS_DEBUG)
+/*#if defined(ROS) || defined(ROS_DEBUG)
     // Adding the ebrake. The brake variable is flipped, so false = brake on
     if (eBrake)
     {
         brake = false;
     }
     transmitDac(refSpeedL, refSpeedR);
-#endif
+#endif*/
 
     digitalWrite(directionLPin, directionL);
     digitalWrite(directionRPin, directionR);
@@ -235,7 +235,7 @@ void loop()
     getFreq();
     freqToSpeed();
 
-#ifdef ROS_DEBUG
+/*#ifdef ROS_DEBUG
     transmitDac(refSpeedL, refSpeedR);
-#endif
+#endif*/
 }

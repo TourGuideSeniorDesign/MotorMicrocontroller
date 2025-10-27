@@ -4,10 +4,10 @@
 #include "globals.h"
 #include <micro_ros_platformio.h>
 #include <wheelchair_sensor_msgs/msg/ref_speed.h>
-#include <wheelchair_sensor_msgs/msg/brake.h>
+//#include <wheelchair_sensor_msgs/msg/brake.h>
 #include <wheelchair_sensor_msgs/msg/battery.h> // BATTERY
 #include <wheelchair_sensor_msgs/msg/motors.h>  // Added: for sending wheel speed in MPH
-#include <wheelchair_sensor_msgs/msg/dac_values.h>
+//#include <wheelchair_sensor_msgs/msg/dac_values.h>
 
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
@@ -15,14 +15,14 @@
 #include <rclc/executor.h>
 
 
-bool eBrake = false;
+//bool eBrake = false;
 
 
 // ROS messages
-#ifdef ROS_DEBUG
+/*#ifdef ROS_DEBUG
 
 #include <wheelchair_sensor_msgs/msg/sensors.h>
-#endif
+#endif*/
 
 // Executor
 rclc_executor_t executor;
@@ -31,8 +31,8 @@ rclc_executor_t executor;
 rcl_subscription_t subscriber;
 wheelchair_sensor_msgs__msg__RefSpeed refSpeedMsg;
 
-rcl_subscription_t brake_subscriber;
-wheelchair_sensor_msgs__msg__Brake brakeMsg;
+/*rcl_subscription_t brake_subscriber;
+wheelchair_sensor_msgs__msg__Brake brakeMsg;*/
 
 // BATTERY
 rcl_publisher_t batteryPublisher;
@@ -46,14 +46,14 @@ rcl_timer_t motorTimer;
 wheelchair_sensor_msgs__msg__Motors motorMsg;
 
 
-rcl_publisher_t dacPublisher;
-wheelchair_sensor_msgs__msg__DacValues dacMsg;
+/*rcl_publisher_t dacPublisher;
+wheelchair_sensor_msgs__msg__DacValues dacMsg;*/
 
 
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
-rcl_timer_t timer;
+//rcl_timer_t timer;
 
 enum states {
   WAITING_AGENT,
@@ -79,12 +79,12 @@ void error_loop() {
 }
 
 
-void timer_callback(rcl_timer_t * inputTimer, int64_t last_call_time) {
+/*void timer_callback(rcl_timer_t * inputTimer, int64_t last_call_time) {
     RCLC_UNUSED(last_call_time);
     if (inputTimer != NULL) {
         RCSOFTCHECK(rcl_publish(&dacPublisher, &dacMsg, NULL));
     }
-}
+}*/
 
 void battery_timer_callback(rcl_timer_t *input_timer, int64_t last_call_time) {
     RCLC_UNUSED(last_call_time);
@@ -106,13 +106,13 @@ void motor_timer_callback(rcl_timer_t *input_timer, int64_t last_call_time) {
     }
 }
 
-void transmitDac(int16_t leftDacValue, int16_t rightDacValue) {
+/*void transmitDac(int16_t leftDacValue, int16_t rightDacValue) {
 
     dacMsg.left_dac = leftDacValue;
     dacMsg.right_dac = rightDacValue;
     //RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)));
 
-}
+}*/
 
 
 void subscription_callback(const void *msgin)
@@ -140,11 +140,11 @@ void subscription_callback(const void *msgin)
 }
 
 
-void brake_subscription_callback(const void *msgin)
+/*void brake_subscription_callback(const void *msgin)
 {
     const wheelchair_sensor_msgs__msg__Brake *msg = (const wheelchair_sensor_msgs__msg__Brake *)msgin;
     eBrake = msg->brake;
-}
+}*/
 
 bool create_entities(){
     allocator = rcl_get_default_allocator();
@@ -162,12 +162,12 @@ bool create_entities(){
             "ref_speed"));
 
   // Create Brake Subscriber
-    RCCHECK(rclc_subscription_init_best_effort(
+    /*RCCHECK(rclc_subscription_init_best_effort(
             &brake_subscriber,
             &node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(wheelchair_sensor_msgs, msg, Brake),
             "ebrake"));
-
+    */
 
     RCCHECK(rclc_publisher_init_default(
         &batteryPublisher,
@@ -195,34 +195,36 @@ bool create_entities(){
         RCL_MS_TO_NS(1000),
         motor_timer_callback));
 
-    RCCHECK(rclc_publisher_init_best_effort(
+    /*RCCHECK(rclc_publisher_init_best_effort(
         &dacPublisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(wheelchair_sensor_msgs, msg, DacValues),
         "dac_value"));
-
-    RCCHECK(rclc_timer_init_default(
+    */
+    /*RCCHECK(rclc_timer_init_default(
         &timer,
         &support,
         RCL_MS_TO_NS(500),
         timer_callback));
-
+    */  
     //Number of handles = # timers + # subscriptions + # clients + # services
     executor = rclc_executor_get_zero_initialized_executor();
-    RCCHECK(rclc_executor_init(&executor, &support.context, 5, &allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 5, &allocator)); // Unsure about value of 5
 
     // add sub to executor
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &refSpeedMsg, &subscription_callback, ON_NEW_DATA));
 
     // Add brake sub to executor
-    RCCHECK(rclc_executor_add_subscription(&executor, &brake_subscriber, &brakeMsg, &brake_subscription_callback, ON_NEW_DATA));
+    /*RCCHECK(rclc_executor_add_subscription(&executor, &brake_subscriber, &brakeMsg, &brake_subscription_callback, ON_NEW_DATA));
+    */
 
     RCCHECK(rclc_executor_add_timer(&executor, &batteryTimer)); // BATTERY: add battery timer to executor
 
    // Add motor timer to executor
     RCCHECK(rclc_executor_add_timer(&executor, &motorTimer));
 
-    RCCHECK(rclc_executor_add_timer(&executor, &timer));
+    /*RCCHECK(rclc_executor_add_timer(&executor, &timer));
+    */
 
     state = WAITING_AGENT;
 
@@ -234,13 +236,16 @@ void destroy_entities() {
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
     RCCHECK(rcl_subscription_fini(&subscriber, &node));
-    RCCHECK(rcl_subscription_fini(&brake_subscriber, &node));
+    /*RCCHECK(rcl_subscription_fini(&brake_subscriber, &node));
+    */
     RCCHECK(rcl_publisher_fini(&motorPublisher, &node));
     RCCHECK(rcl_publisher_fini(&batteryPublisher, &node));
-    RCCHECK(rcl_publisher_fini(&dacPublisher, &node));
+    /*RCCHECK(rcl_publisher_fini(&dacPublisher, &node));
+    */
     RCCHECK(rcl_timer_fini(&batteryTimer));
     RCCHECK(rcl_timer_fini(&motorTimer));
-    RCCHECK(rcl_timer_fini(&timer));
+    /*RCCHECK(rcl_timer_fini(&timer));
+    */
     RCCHECK(rclc_executor_fini(&executor));
     RCCHECK(rcl_node_fini(&node));
     RCCHECK(rclc_support_fini(&support));
