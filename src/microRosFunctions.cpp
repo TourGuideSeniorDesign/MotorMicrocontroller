@@ -275,6 +275,12 @@ void microRosTick(){
     }
 }
 
+void publishMotorSpeedsNow() {
+    // prepare message with the latest globals (speedL / speedR)
+    motorMsg.left_mph = static_cast<int8_t>(speedL);
+    motorMsg.right_mph = static_cast<int8_t>(speedR);
+    RCSOFTCHECK(rcl_publish(&motorPublisher, &motorMsg, NULL));
+}
 
 refSpeed getRefSpeed() {
     refSpeed refSpeed;

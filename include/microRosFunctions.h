@@ -30,6 +30,7 @@ void microRosTick();
  */
 refSpeed getRefSpeed();
 
+void publishMotorSpeedsNow();
 
 void transmitDac(int16_t leftDacValue, int16_t rightDacValue);
 

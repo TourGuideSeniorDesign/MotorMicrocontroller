@@ -235,6 +235,10 @@ void loop()
     getFreq();
     freqToSpeed();
 
+#if defined(ROS) || defined(ROS_DEBUG)
+    publishMotorSpeedsNow();
+#endif
+
 #ifdef ROS_DEBUG
     transmitDac(refSpeedL, refSpeedR);
 #endif
