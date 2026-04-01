@@ -37,7 +37,7 @@ jobs:
           path: .pio/build/**/firmware.bin
 
       - name: Convert BIN to UF2
-          run: 
-            curl -O https://githubusercontent.com
-            python3 uf2conv.py -c -f RP2040 -o firmware.uf2 .pio/build/<env_name>/firmware.bin
+        run: |
+          curl -O https://githubusercontent.com
+          python3 uf2conv.py -c -f RP2040 -o firmware.uf2 .pio/build/<env_name>/firmware.bin
 
